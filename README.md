@@ -30,8 +30,11 @@ Test
 Go to...
 	
 // Central server
+
 http://localhost:8080/servidor_central/
+
 // Local sites
+
 http://localhost:8080/servidor_local/
 
 Default users:
