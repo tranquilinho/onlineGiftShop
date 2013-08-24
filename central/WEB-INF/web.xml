@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/j2eeweb-app_2_4.xsd">
+
+
+    <!-- Descripcion general de la aplicación web-->
+
+    <display-name>Online gift shop</display-name>
+    <description>Template of a distributed online shop</description>
+
+
+<context-param>
+    <param-name>dbURL</param-name>
+    <param-value>jdbc:mysql://localhost/sede_central</param-value>
+</context-param>
+−
+<context-param>
+    <param-name>dbUser</param-name>
+    <param-value>root</param-value>
+</context-param>
+
+<context-param>
+    <param-name>dbPassword</param-name>
+    <param-value/>
+</context-param>
+
+
+    <servlet>
+        <description>Autenticacion de usuarios</description>
+        <servlet-name>Login</servlet-name>
+        <jsp-file>/login.jsp</jsp-file>
+    </servlet>
+
+    <servlet>
+        <servlet-name>Menu Central</servlet-name>
+        <jsp-file>/menu_central.jsp</jsp-file>
+    </servlet>
+
+    <servlet>
+        <servlet-name>Gestion Articulos</servlet-name>
+        <jsp-file>/gestion_articulos.jsp</jsp-file>
+    </servlet>
+
+    <servlet>
+        <servlet-name>Alta Articulos</servlet-name>
+        <jsp-file>/alta_articulo.jsp</jsp-file>
+    </servlet>
+
+    <servlet>
+        <servlet-name>Cola Articulos</servlet-name>
+        <jsp-file>/cola_articulos.jsp</jsp-file>
+    </servlet>
+
+
+
+    <servlet>
+        <servlet-name>ServletCentral</servlet-name>
+        <servlet-class>ServletCentral</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ServletCentral</servlet-name>
+        <url-pattern>/servlet/ServletCentral</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ServletLogin</servlet-name>
+        <servlet-class>ServletLogin</servlet-class>
+    </servlet>
+ 
+    <servlet-mapping>
+        <servlet-name>ServletLogin</servlet-name>
+        <url-pattern>/servlet/ServletLogin</url-pattern>
+    </servlet-mapping>
+
+
+ 
+    <session-config>
+      <session-timeout>30</session-timeout>
+    </session-config>
+
+    <welcome-file-list>
+        <welcome-file>login.jsp</welcome-file>
+        </welcome-file-list>
+</web-app>

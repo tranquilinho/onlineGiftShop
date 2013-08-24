@@ -1,0 +1,254 @@
+<project name="Articulos de regalo - Servidor local" default="ayuda" basedir=".">
+
+	<property environment="env" />
+	<property name="nombre" value="articulos_regalo_local"/>
+	<property name="build" value="${basedir}/WEB-INF/classes"/>
+	<property name="dist" value="${basedir}/dist"/>
+	<property name="lib" value="${basedir}/lib"/>
+	<property name="src" value="${basedir}/src"/>
+	<property name="local-war" value="${nombre}.war"/>
+
+	<property name="nombre-servicio" value="servicio_articulos"/>	
+	<property name="basedir-servicio" value="${basedir}/servicio-articulos"/>
+	<property name="build-servicio" value="${basedir-servicio}/WEB-INF/classes"/>
+	<property name="dist-servicio" value="${basedir-servicio}/dist"/>
+	<property name="src-servicio" value="${basedir-servicio}/src"/>
+	<property name="portable-war" value="${nombre-servicio}-portable.war"/>
+	<property name="deployable-war" value="${nombre-servicio}-jaxrpc.war"/>
+
+	<property name="jwsdp.home" value="C:/Sun/jwsdp-2.0"/>
+	<property name="jwsdp.shared" value="${jwsdp.home}/jwsdp-shared"/>
+	<property name="jaxp.home" value="${jwsdp.home}/jaxp" />
+	<property name="jaxrpc.home" value="${jwsdp.home}/jaxrpc" />
+	<property name="saaj.home" value="${jwsdp.home}/saaj" />
+	<property name="wscompile" value="${jwsdp.home}/jaxrpc/bin/wscompile.bat"/>
+	<property name="wsdeploy" value="${jwsdp.home}/jaxrpc/bin/wsdeploy.bat"/>
+        <property name="tomcat.home" value="c:/tomcat50-jwsdp"/>
+
+	<property name="driver-mysql" value="C:/Archivos de programa/MySQL/mysql-connector-java-3.1.12/mysql-connector-java-3.1.12-bin.jar" />
+	
+	<property name="manager" value="http://localhost:8080/manager" />
+	<property name="username" value="tomcat" />
+	<property name="password" value="tomcat" />
+	<property name="context.path" value="servidor_local" />
+	<property name="context-servicio.path" value="articulos-jaxrpc" />
+
+	
+	<path id="compile.classpath">
+		<pathelement location="${jwsdp.shared}/lib/mail.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/activation.jar"/>
+		<pathelement location="${jaxp.home}/lib/jaxp-api.jar"/>
+		<pathelement location="${jaxp.home}/lib/endorsed/dom.jar"/>
+		<pathelement location="${jaxp.home}/lib/endorsed/sax.jar"/>
+		<pathelement location="${jaxp.home}/lib/endorsed/xalan.jar"/>
+		<pathelement location="${jaxp.home}/lib/endorsed/xercesImpl.jar"/>
+		<pathelement location="${jaxrpc.home}/lib/jaxrpc-api.jar"/>
+		<pathelement location="${jaxrpc.home}/lib/jaxrpc-impl.jar"/>
+		<pathelement location="${jaxrpc.home}/lib/jaxrpc-spi.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/commons-logging.jar"/>
+		<pathelement location="${saaj.home}/lib/saaj-api.jar"/>
+		<pathelement location="${saaj.home}/lib/saaj-impl.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/relaxngDatatype.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/xsdlib.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/jax-qname.jar"/>
+		<pathelement location="${jwsdp.home}/apache-ant/lib/ant.jar"/>
+		<pathelement location="${jwsdp.home}/sjsxp/lib/jsr173_api.jar" />
+		<pathelement location="${jwsdp.home}/fastinfoset/lib/FastInfoset.jar" />
+                <pathelement location="${jwsdp.home}/fastinfoset/lib/FastInfoset.jar" />
+		<pathelement location="${tomcat.home}/common/lib/servlet-api.jar"/>
+	</path>
+
+	<taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask" />
+	<taskdef name="undeploy" classname="org.apache.catalina.ant.UndeployTask" />
+	<taskdef name="list" classname="org.apache.catalina.ant.ListTask" />
+	<taskdef name="start" classname="org.apache.catalina.ant.StartTask" />
+	<taskdef name="stop" classname="org.apache.catalina.ant.StopTask" />
+	<taskdef name="install"  classname="org.apache.catalina.ant.InstallTask"/>
+	<taskdef name="reload"   classname="org.apache.catalina.ant.ReloadTask"/>
+	<taskdef name="remove" classname="org.apache.catalina.ant.RemoveTask"/>	
+	
+	<target name="ayuda">
+		<echo>
+Compilacion del servidor local:
+ant compilar-servidor-local
+ant empaquetar-servidor-local
+
+Despliegue del servidor local:
+ant desplegar-servidor-local
+ant replegar-servidor-local
+ant redesplegar-servidor-local
+ant arrancar
+ant parar
+
+Compilacion del servicio:
+ant compilar-servicio
+ant empaquetar-servicio
+ant generar-war-desplegable
+
+Despliegue del servicio:
+ant desplegar-servicio
+ant replegar-servicio
+ant redesplegar-servicio
+
+
+General:
+ant limpiar
+ant limpiar-todo
+		</echo>
+	</target>	
+
+	<target name="montar-jerarquia" description="crea los directorios del proyecto">
+		<mkdir dir="${build}" />
+		<mkdir dir="${dist}" />
+	</target>
+  
+	<target name="preparar-web-inf" description="Copia los archivos necesarios al WEB-INF para crear el .war">
+		<copy file="../lib/mysql-connector-java-3.1.12-bin.jar" tofile="WEB-INF/lib/mysql-connector-java-3.1.12-bin.jar" />
+	</target>
+  
+  
+	<target name="compilar-servidor-local" depends="montar-jerarquia" description="Compila el servidor local">
+		<javac
+			srcdir="${src}" 
+			destdir="${build}" 
+			includes="*.java" 
+		/>	
+	</target>
+
+	<target name="empaquetar-servidor-local" description="Genera el .war del servidor local" depends="compilar-servidor-local,preparar-web-inf">
+		<delete file="${dist}/${local-war}" />
+		<jar jarfile="${dist}/${local-war}" >
+			<fileset dir="${basedir}" includes="WEB-INF/**" />
+			<fileset dir="${basedir}" includes="*.jsp" />		
+		</jar>
+	</target>
+
+	<target name="desplegar-servidor-local" description="Despliega el servidor" depends="empaquetar-servidor-local">
+		 <deploy 
+			url="${manager}" 
+			username="${username}" 
+			password="${password}" 
+			path="/${context.path}" 
+			war="file:${dist}/${local-war}"   
+		/>
+  	</target>
+
+	<target name="replegar-servidor-local" description="Replega el servicio" >
+		<undeploy 
+			url="${manager}" 
+			username="${username}" 
+			password="${password}"
+			path="/${context.path}"     
+		/>
+	</target> 
+	
+	<target name="redesplegar-servidor-local" description="Replega y vuelve a desplegar el servicio" >
+		<antcall target="replegar-servidor-local" />
+		<antcall target="desplegar-servidor-local" />
+	</target>
+	
+	<target name="arrancar" description="Arranca el servicio" >
+		<start
+			url="${manager}" 
+			username="${username}" 
+			password="${password}" 
+			path="/${context.path}" 
+		/>
+	</target>
+	
+	<target name="parar" description="Para el servicio" > 
+		<stop
+			url="${manager}" 
+			username="${username}" 
+			password="${password}" 
+			path="/${context.path}" 
+		/>
+	</target>
+	
+
+	<target name="montar-jerarquia-servicio" description="crea los directorios del servicio de articulos">
+		<mkdir dir="${build-servicio}" />
+		<mkdir dir="${dist-servicio}" />
+		<mkdir dir="${basedir-servicio}/wsdeploy-generated" />
+		<copy file="${src}/ArticuloBean.java" todir="${src-servicio}" />
+		<copy file="${src}/ConexionBean.java" todir="${src-servicio}" />		
+	</target>
+  
+	<target name="preparar-web-inf-servicio" description="Copia los archivos necesarios al WEB-INF para crear el .war del servicio de articulos">
+		<copy file="../lib/mysql-connector-java-3.1.12-bin.jar" tofile="${basedir-servicio}/WEB-INF/lib/mysql-connector-java-3.1.12-bin.jar" />
+		<copy file="articulos_db.properties" todir="${build-servicio}/ogs" />
+	</target>
+
+	<target name="compilar-servicio" depends="montar-jerarquia-servicio" description="Compila el servicio de articulos">
+		<javac
+			srcdir="${src-servicio}" 
+			destdir="${build-servicio}" 
+			includes="*.java" 
+		/>	
+	</target>
+
+	<target name="empaquetar-servicio" description="Genera un .war inicial del servicio de articulos" depends="compilar-servicio,preparar-web-inf-servicio">
+		<delete file="${dist-servicio}/${portable-war}" />
+		<jar jarfile="${dist-servicio}/${portable-war}" >
+			<fileset dir="${basedir-servicio}" includes="WEB-INF/**" />
+		</jar>
+	</target>
+
+	<target name="generar-war-desplegable" description="Genera un .war con los ties del servicio" depends="empaquetar-servicio" >
+		<delete file="${dist-servicio}/${deployable-war}" />
+		<exec executable="${wsdeploy}">
+			<arg line="-tmpdir"/>
+			<arg line="${basedir-servicio}/wsdeploy-generated"/>
+			<arg line="-o ${dist-servicio}/${deployable-war}"/>
+			<arg line="${dist-servicio}/${portable-war}"/>
+			<arg line="-verbose"/>
+		</exec>
+	</target>
+	
+	<target name="desplegar-servicio" description="Despliega el servicio" depends="generar-war-desplegable">
+		 <deploy 
+			url="${manager}" 
+			username="${username}" 
+			password="${password}" 
+			path="/${context-servicio.path}" 
+			war="file:${dist-servicio}/${deployable-war}"   
+		/>
+  	</target>
+	
+	<target name="replegar-servicio" description="Replega el servicio" >
+		<undeploy 
+			url="${manager}" 
+			username="${username}" 
+			password="${password}"
+			path="/${context-servicio.path}"     
+		/>
+	</target> 
+	
+	<target name="redesplegar-servicio" description="Replega y vuelve a desplegar el servicio" >
+		<antcall target="replegar-servicio" />
+		<antcall target="desplegar-servicio" />
+	</target>
+
+	
+	  <target name="limpiar" 
+		description="Borra el directorio build y archivos innecesarios">
+		<delete dir="${build}" />
+		<delete dir="${build-servicio}" />
+		<delete dir="${basedir-servicio}/wsdeploy-generated" />
+		<delete>
+			<fileset dir="." includes="**/*.bak" />
+			<fileset dir="." includes="*.bak" />
+		</delete>
+	  </target>
+	  
+ 	  <target name="limpiar-todo" depends="limpiar"
+		description="Borra el directorio build y el directorio dist">
+		<delete dir="${dist}" />
+		<delete dir="${dist-servicio}" />
+		<delete file="${basedir-servicio}/WEB-INF/lib/mysql-connector-java-3.1.12-bin.jar" />
+		<delete>
+			<fileset dir="WEB-INF/lib" includes="*"/>
+		</delete>
+	  </target>
+ 
+</project>

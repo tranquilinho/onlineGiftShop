@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<webServices
+    xmlns="http://java.sun.com/xml/ns/jax-rpc/ri/dd"
+    version="1.0"
+    targetNamespaceBase="http://localhost/wsdl"
+    typeNamespaceBase="http://localhost/types"
+    urlPatternBase="/visa">
+
+    <endpoint
+        name="VisaService"
+        displayName="Servicio VISA"
+        description="Un servicio web de tarjetas de credito" 
+        interface="visa.VisaIF"  
+        implementation="visa.VisaImpl"/> 
+ 
+    <endpointMapping
+        endpointName="VisaService"
+        urlPattern="/visa"/>
+
+</webServices> 

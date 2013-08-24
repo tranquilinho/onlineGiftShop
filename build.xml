@@ -1,0 +1,213 @@
+<project name="Servicio de venta de articulos de regalo" default="ayuda" basedir=".">
+
+	<property name="my-sql-bin" value="C:\Archivos de programa\MySQL\MySQL Server 5.0\bin\mysql"/>
+	<property name="my-sql-user" value="root"/>
+	<property name="bd-scripts-dir" value="BD"/>
+	<!-- La maquina donde reside el DBMS 192.168.1.10 -->
+	<property name="db-host" value="localhost" />
+
+	<target name="ayuda">
+		<echo>
+Deploy everything:
+ant todo
+        
+Database targets:
+ant crear-tablas-bd-local
+ant cargar-bd-local
+ant crear-tablas-bd-central
+ant cargar-bd-central
+ant crear-bd-visa
+
+Central server:
+ant desplegar-servidor-central
+
+Local sites:
+ant desplegar-servidor-local
+ant desplegar-servicio-articulos
+
+Bank services:
+ant desplegar-visa
+
+Clean:
+ant limpiar
+ant limpiar-todo
+
+		</echo>
+	</target>
+
+	<target name="desplegar-servidor-central">
+		<ant dir="central" target="desplegar-servidor-central" />
+	</target>
+
+	<target name="desplegar-servidor-local">
+		<ant dir="local" target="desplegar-servidor-local" />
+	</target>        
+
+	<target name="desplegar-servicio-articulos">
+		<ant dir="local" target="desplegar-servicio" />
+	</target>        
+        
+        <target name="desplegar-visa">
+		<ant dir="VISA" target="desplegar" />
+	</target>
+
+	<target name="replegar-servidor-central">
+		<ant dir="central" target="replegar-servidor-central" />
+	</target>
+
+	<target name="replegar-servidor-local">
+		<ant dir="local" target="replegar-servidor-local" />
+	</target>        
+
+	<target name="replegar-servicio-articulos">
+		<ant dir="local" target="replegar-servicio" />
+	</target>              
+        
+        <target name="replegar-visa">
+		<ant dir="VISA" target="replegar" />
+	</target>        
+        
+        <target name="todo" depends="crear-tablas-bd-local,cargar-bd-local,crear-tablas-bd-central,cargar-bd-central,crear-bd-visa,desplegar-visa,desplegar-servidor-local,desplegar-servicio-articulos,desplegar-servidor-central" />
+        
+        <target name="replegar-todo" depends="replegar-visa,replegar-servicio-articulos,replegar-servidor-local,replegar-servidor-central" />        
+
+
+	<target name="crear-bd-local">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -e &quot;source ${bd-scripts-dir}/crea_bd_local.sql&quot;"/>
+		</exec>
+	</target>		
+	
+	<target name="crear-tabla-usuarios-local">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_local -e &quot;source ${bd-scripts-dir}/usuarios.sql&quot;"/>
+		</exec>
+	</target>			
+
+	<target name="crear-tabla-pedidos-local">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_local -e &quot;source ${bd-scripts-dir}/pedido.sql&quot;"/>
+		</exec>
+	</target>	
+	
+	<target name="crear-tabla-articulos">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_local -e &quot;source ${bd-scripts-dir}/articulo.sql&quot;"/>
+		</exec>
+	</target>		
+
+	<target name="crear-tabla-temporadas">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_local -e &quot;source ${bd-scripts-dir}/temporada.sql&quot;"/>
+		</exec>
+	</target>
+
+	<target name="crear-tabla-temporadas-articulo">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_local -e &quot;source ${bd-scripts-dir}/temporadas-articulo.sql&quot;"/>
+		</exec>
+	</target>
+
+	<target name="crear-tabla-articulos-pedido-local">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_local -e &quot;source ${bd-scripts-dir}/articulos-pedido.sql&quot;"/>
+		</exec>
+	</target>
+	
+	<target name="crear-tabla-direcciones-local">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_local -e &quot;source ${bd-scripts-dir}/direccion.sql&quot;"/>
+		</exec>
+	</target>	
+
+	<target name="crear-tablas-bd-local" depends="crear-bd-local,crear-tabla-usuarios-local,crear-tabla-pedidos-local,crear-tabla-articulos,crear-tabla-temporadas,crear-tabla-temporadas-articulo,crear-tabla-articulos-pedido-local,crear-tabla-direcciones-local"/>
+
+	<target name="cargar-bd-local">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_local -e &quot;source ${bd-scripts-dir}/carga_sede_local.sql&quot;"/>
+		</exec>
+	</target>		
+	
+
+
+	<target name="crear-bd-central">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -e &quot;source ${bd-scripts-dir}/crea_bd_central.sql&quot;"/>
+		</exec>
+	</target>		
+	
+	<target name="crear-tabla-usuarios-central">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_central -e &quot;source ${bd-scripts-dir}/usuarios.sql&quot;"/>
+		</exec>
+	</target>			
+
+	<target name="crear-tabla-clientes">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_central -e &quot;source ${bd-scripts-dir}/cliente.sql&quot;"/>
+		</exec>
+	</target>			
+
+
+	<target name="crear-tabla-pedidos-central">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_central -e &quot;source ${bd-scripts-dir}/pedido-central.sql&quot;"/>
+		</exec>
+	</target>	
+	
+
+	<target name="crear-tabla-direcciones-central">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_central -e &quot;source ${bd-scripts-dir}/direccion.sql&quot;"/>
+		</exec>
+	</target>	
+
+	<target name="crear-tabla-sedes">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_central -e &quot;source ${bd-scripts-dir}/sede.sql&quot;"/>
+		</exec>
+	</target>			
+
+	<target name="crear-tabla-articulos-pedido-central">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_central -e &quot;source ${bd-scripts-dir}/articulos-pedido-central.sql&quot;"/>
+		</exec>
+	</target>
+
+
+
+	<target name="crear-tablas-bd-central" depends="crear-bd-central,crear-tabla-usuarios-central,crear-tabla-clientes,crear-tabla-pedidos-central,crear-tabla-direcciones-central,crear-tabla-sedes,crear-tabla-articulos-pedido-central"/>
+
+	<target name="cargar-bd-central">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -D sede_central -e &quot;source ${bd-scripts-dir}/carga_sede_central.sql&quot;"/>
+		</exec>
+	</target>		
+
+
+	<target name="crear-bd-visa">
+		<exec executable="${my-sql-bin}">
+			<arg line="-u ${my-sql-user} -h ${db-host} -e &quot;source ${bd-scripts-dir}/visa.sql&quot;"/>
+		</exec>
+	</target>			
+
+
+	  <target name="limpiar" 
+		description="Borra el directorio build y archivos innecesarios">
+		<ant dir="central" target="limpiar" />
+		<ant dir="local" target="limpiar" />
+		<ant dir="VISA" target="limpiar" />
+		<delete>
+			<fileset dir="." includes="*.bak" />
+			<fileset dir="BD" includes="*.bak" />
+		</delete>
+	  </target>
+	  
+ 	  <target name="limpiar-todo" depends="limpiar"
+		description="Borra el directorio build y el directorio dist">
+		<ant dir="central" target="limpiar-todo" />
+		<ant dir="local" target="limpiar-todo" />
+		<ant dir="VISA" target="limpiar-todo" />
+	  </target>
+
+</project>

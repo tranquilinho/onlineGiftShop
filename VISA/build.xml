@@ -1,0 +1,275 @@
+<project name="Servicio Web de Visa" default="ayuda" basedir=".">
+
+	<property environment="env" />
+	<property name="nombre" value="visa"/>
+	<property name="build" value="${basedir}/build"/>
+	<property name="dist" value="${basedir}/dist"/>
+	<property name="src" value="${basedir}/src"/>
+	<property name="paquete" value="visa"/>
+	<property name="portable-war" value="${nombre}-portable.war"/>
+	<property name="deployable-war" value="${nombre}-jaxrpc.war"/>
+	<property name="jwsdp.home" value="C:/Sun/jwsdp-2.0"/>
+	<property name="jwsdp.shared" value="${jwsdp.home}/jwsdp-shared"/>
+	<property name="jaxp.home" value="${jwsdp.home}/jaxp" />
+	<property name="jaxrpc.home" value="${jwsdp.home}/jaxrpc" />
+	<property name="saaj.home" value="${jwsdp.home}/saaj" />
+	<property name="wscompile" value="${jwsdp.home}/jaxrpc/bin/wscompile.bat"/>
+	<property name="wsdeploy" value="${jwsdp.home}/jaxrpc/bin/wsdeploy.bat"/>
+	<property name="nombre-clase-cliente" value="${paquete}.VisaCliente"/>
+	<property name="client-jar" value="cliente.war"/>
+	<property name="driver-mysql" value="C:/Archivos de programa/MySQL/mysql-connector-java-3.1.12/mysql-connector-java-3.1.12-bin.jar" />
+	
+	<property name="manager" value="http://localhost:8080/manager" />
+	<property name="username" value="tomcat" />
+	<property name="password" value="tomcat" />
+	<property name="context.path" value="visa-jaxrpc" />
+	<property name="client-context.path" value="visa-cliente" />
+	
+	<path id="compile.classpath">
+		<pathelement location="${jwsdp.shared}/lib/mail.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/activation.jar"/>
+		<pathelement location="${jaxp.home}/lib/jaxp-api.jar"/>
+		<pathelement location="${jaxp.home}/lib/endorsed/dom.jar"/>
+		<pathelement location="${jaxp.home}/lib/endorsed/sax.jar"/>
+		<pathelement location="${jaxp.home}/lib/endorsed/xalan.jar"/>
+		<pathelement location="${jaxp.home}/lib/endorsed/xercesImpl.jar"/>
+		<pathelement location="${jaxrpc.home}/lib/jaxrpc-api.jar"/>
+		<pathelement location="${jaxrpc.home}/lib/jaxrpc-impl.jar"/>
+		<pathelement location="${jaxrpc.home}/lib/jaxrpc-spi.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/commons-logging.jar"/>
+		<pathelement location="${saaj.home}/lib/saaj-api.jar"/>
+		<pathelement location="${saaj.home}/lib/saaj-impl.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/relaxngDatatype.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/xsdlib.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/jax-qname.jar"/>
+		<pathelement location="${jwsdp.home}/apache-ant/lib/ant.jar"/>
+		<pathelement location="${jwsdp.home}/sjsxp/lib/jsr173_api.jar" />
+		<pathelement location="${jwsdp.home}/fastinfoset/lib/FastInfoset.jar" />
+		<pathelement location="${build}/shared"/>
+	</path>
+
+	<path id="run.classpath">
+		<path refid="compile.classpath"/>
+		<pathelement location="${dist}/${client-jar}"/>
+	</path>
+
+	<taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask" />
+	<taskdef name="undeploy" classname="org.apache.catalina.ant.UndeployTask" />
+	<taskdef name="list" classname="org.apache.catalina.ant.ListTask" />
+	<taskdef name="start" classname="org.apache.catalina.ant.StartTask" />
+	<taskdef name="stop" classname="org.apache.catalina.ant.StopTask" />
+	<taskdef name="install"  classname="org.apache.catalina.ant.InstallTask"/>
+	<taskdef name="reload"   classname="org.apache.catalina.ant.ReloadTask"/>
+	<taskdef name="remove" classname="org.apache.catalina.ant.RemoveTask"/>	
+	
+	<target name="ayuda">
+		<echo>
+Compilacion del servidor:
+ant compilar-parte-servidor
+ant empaquetar
+ant generar-war-desplegable
+
+Despliegue del servidor:
+ant desplegar
+ant replegar
+ant redesplegar
+ant arrancar
+ant parar
+
+Compilacion del cliente:
+ant generar-stubs
+ant compilar-cliente
+ant empaquetar-cliente
+ant ejecutar-cliente
+
+General:
+ant limpiar
+ant limpiar-todo
+		</echo>
+	</target>	
+
+	<target name="montar-jerarquia" description="crea los directorios del proyecto">
+		<mkdir dir="${build}/client/${paquete}" />
+		<mkdir dir="${build}/server/${paquete}" />
+		<mkdir dir="${build}/shared/${paquete}" />
+		<mkdir dir="${build}/wsdeploy-generated" />
+		<mkdir dir="${dist}" />
+		<mkdir dir="${build}/WEB-INF/classes/${paquete}" />
+		<mkdir dir="${build}/WEB-INF/lib" />
+		<mkdir dir="${build}/client/WEB-INF/classes/${paquete}" />
+		<mkdir dir="${build}/client/WEB-INF/classes/ogs" />
+		<mkdir dir="${build}/client/WEB-INF/lib" />
+	</target>
+  
+	<target name="compilar-parte-servidor" depends="montar-jerarquia" description="Compila el servidor">
+		<javac
+			srcdir="${src}" 
+			destdir="${build}/shared" 
+			includes="*.java" 
+			excludes="*Cliente.java"/>	
+	</target>
+
+	<target name="preparar-web-inf" description="Copia los archivos necesarios al WEB-INF para crear el .war">
+		<delete dir="${build}/WEB-INF" />
+		<copy todir="${build}/WEB-INF/classes/${paquete}">
+			<fileset dir="${build}/shared/${paquete}" />
+			<fileset dir="${build}/server/${paquete}" />
+		</copy>
+		<copy file="web-servicio.xml" tofile="${build}/WEB-INF/web.xml" />
+		<copy file="jaxrpc-ri.xml" todir="${build}/WEB-INF" />
+		<copy file="${driver-mysql}" todir="${build}/WEB-INF/lib" />
+	</target>
+
+	<target name="empaquetar" description="Genera un .war inicial" depends="compilar-parte-servidor,preparar-web-inf">
+		<delete file="${dist}/${portable-war}" />
+		<jar jarfile="${dist}/${portable-war}" >
+			<fileset dir="${build}" includes="WEB-INF/**" />
+		</jar>
+	</target>
+
+	<target name="generar-war-desplegable" description="Genera un .war con los ties del servicio" depends="empaquetar">
+		<delete file="${dist}/${deployable-war}" />
+		<exec executable="${wsdeploy}">
+			<arg line="-tmpdir"/>
+			<arg line="${build}/wsdeploy-generated"/>
+			<arg line="-o ${dist}/${deployable-war}"/>
+			<arg line="${dist}/${portable-war}"/>
+			<arg line="-verbose"/>
+		</exec>
+	</target>
+
+	<target name="desplegar" description="Despliega el servicio" depends="generar-war-desplegable">
+		 <deploy 
+			url="${manager}" 
+			username="${username}" 
+			password="${password}" 
+			path="/${context.path}" 
+			war="file:${dist}/${deployable-war}"   
+		/>
+  	</target>
+
+	<target name="replegar" description="Replega el servicio" >
+		<undeploy 
+			url="${manager}" 
+			username="${username}" 
+			password="${password}"
+			path="/${context.path}"     
+		/>
+	</target> 
+	
+	<target name="redesplegar" description="Replega y vuelve a desplegar el servicio" >
+		<antcall target="replegar" />
+		<antcall target="desplegar" />
+	</target>
+	
+	<target name="arrancar" description="Arranca el servicio" >
+		<start
+			url="${manager}" 
+			username="${username}" 
+			password="${password}" 
+			path="/${context.path}" 
+		/>
+	</target>
+	
+	<target name="parar" description="Para el servicio" > 
+		<stop
+			url="${manager}" 
+			username="${username}" 
+			password="${password}" 
+			path="/${context.path}" 
+		/>
+	</target>
+	
+	<target name="generar-stubs" depends="montar-jerarquia" description="Genera los stubs del cliente a partir del archivo WSDL">
+		<exec executable="${wscompile}">
+			<arg line="-gen:client"/>
+			<arg line="-d ${build}/client/WEB-INF/classes"/>
+			<arg line="-classpath ${build}/shared"/>
+			<arg line="config-cliente.xml"/>
+		</exec>
+	</target>
+
+	<target name="compilar-cliente" depends="generar-stubs" description="Compila el cliente">
+		<javac
+			srcdir="${src}"
+			destdir="${build}/client/WEB-INF/classes"
+			includes="*Cliente.java,*Bean.java" >
+			     <classpath refid="compile.classpath"/>
+			     <classpath path="${build}" />
+		</javac>
+	</target>
+
+	<target name="empaquetar-cliente" description="Empaqueta el cliente en un war">
+		<delete file="${dist}/${client-jar}" />
+		<copy file="web-cliente.xml" tofile="${build}/client/WEB-INF/web.xml" />
+		<copy file="validar_tarjeta.jsp" todir="${build}/client" />		
+		<copy file="index.html" todir="${build}/client" />
+		<copy file="paises.jsp" todir="${build}/client" />
+		<copy file="login.jsp" todir="${build}/client" />
+		<copy file="lib/jstl.jar" todir="${build}/client/WEB-INF/lib" />
+		<copy file="lib/standard.jar" todir="${build}/client/WEB-INF/lib" />
+		<copy file="${driver-mysql}" todir="${build}/client/WEB-INF/lib" />
+		<jar jarfile="${dist}/${client-jar}" >
+			<fileset dir="${build}/client" />
+			<fileset dir="${build}/shared" > 
+				<exclude name="**/*Impl*" />
+				<include name="**/*Implementacion*" />
+			</fileset>
+		</jar>
+	</target>
+	
+	<target name="desplegar-cliente" description="Despliega el cliente" depends="generar-war-desplegable">
+		 <deploy 
+			url="${manager}" 
+			username="${username}" 
+			password="${password}" 
+			path="/${client-context.path}" 
+			war="file:${dist}/${client-jar}"   
+		/>
+  	</target>
+  	
+	<target name="replegar-cliente" description="Repliega el cliente" >
+		<undeploy 
+			url="${manager}" 
+			username="${username}" 
+			password="${password}"
+			path="/${client-context.path}"     
+		/>
+	</target> 
+	
+	<target name="redesplegar-cliente" description="Replega y vuelve a desplegar el cliente" >
+		<antcall target="replegar-cliente" />
+		<antcall target="desplegar-cliente" />
+	</target>  	
+
+	<target name="ejecutar-cliente" description="Ejecuta el cliente">
+		<java 
+			fork="yes"
+			classname="${nombre-clase-cliente}">
+			<classpath refid="run.classpath" />
+		</java>
+  	</target>
+	
+	  <target name="limpiar" 
+		description="Borra el directorio build y archivos innecesarios">
+		<delete dir="${build}" />
+		<delete>
+			<fileset dir="." includes="**/*.bak" />
+		</delete>
+	  </target>
+	  
+ 	  <target name="limpiar-todo" depends="limpiar"
+		description="Borra el directorio build y el directorio dist">
+		<delete dir="${dist}" />
+	  </target>
+
+ 	<target name="cliente" depends="compilar-cliente,empaquetar-cliente,redesplegar-cliente" description="Compila, empaqueta, y despliega el cliente" >
+	</target>
+	
+ 	<target name="servidor" depends="compilar-parte-servidor,empaquetar,generar-war-desplegable,redesplegar" >
+	</target>	
+ 
+ 	<target name="todo" depends="servidor,cliente" description="Compila, empaqueta, y despliega la aplicacion" >
+	</target>
+ 
+</project>

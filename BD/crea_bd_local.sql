@@ -1,0 +1,2 @@
+DROP DATABASE IF EXISTS sede_local;
+CREATE DATABASE sede_local;

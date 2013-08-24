@@ -1,0 +1,183 @@
+<project name="Articulos de regalo - Servidor central" default="ayuda" basedir=".">
+
+	<property environment="env" />
+	<property name="nombre" value="articulos_regalo_central"/>
+	<property name="build" value="${basedir}/WEB-INF/classes"/>
+	<property name="dist" value="${basedir}/dist"/>
+	<property name="lib" value="${basedir}/lib"/>
+	<property name="src" value="${basedir}/src"/>
+	<property name="local-war" value="${nombre}.war"/>
+	<property name="jwsdp.home" value="C:/Sun/jwsdp-2.0"/>
+	<property name="jwsdp.shared" value="${jwsdp.home}/jwsdp-shared"/>
+	<property name="jaxp.home" value="${jwsdp.home}/jaxp" />
+	<property name="jaxrpc.home" value="${jwsdp.home}/jaxrpc" />
+	<property name="saaj.home" value="${jwsdp.home}/saaj" />
+	<property name="wscompile" value="${jwsdp.home}/jaxrpc/bin/wscompile.bat"/>
+	<property name="wsdeploy" value="${jwsdp.home}/jaxrpc/bin/wsdeploy.bat"/>
+
+	<property name="driver-mysql" value="C:/Archivos de programa/MySQL/mysql-connector-java-3.1.12/mysql-connector-java-3.1.12-bin.jar" />
+	
+	<property name="manager" value="http://localhost:8080/manager" />
+	<property name="username" value="tomcat" />
+	<property name="password" value="tomcat" />
+	<property name="context.path" value="servidor_central" />
+
+	
+	<path id="compile.classpath">
+		<pathelement location="${jwsdp.shared}/lib/mail.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/activation.jar"/>
+		<pathelement location="${jaxp.home}/lib/jaxp-api.jar"/>
+		<pathelement location="${jaxp.home}/lib/endorsed/dom.jar"/>
+		<pathelement location="${jaxp.home}/lib/endorsed/sax.jar"/>
+		<pathelement location="${jaxp.home}/lib/endorsed/xalan.jar"/>
+		<pathelement location="${jaxp.home}/lib/endorsed/xercesImpl.jar"/>
+		<pathelement location="${jaxrpc.home}/lib/jaxrpc-api.jar"/>
+		<pathelement location="${jaxrpc.home}/lib/jaxrpc-impl.jar"/>
+		<pathelement location="${jaxrpc.home}/lib/jaxrpc-spi.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/commons-logging.jar"/>
+		<pathelement location="${saaj.home}/lib/saaj-api.jar"/>
+		<pathelement location="${saaj.home}/lib/saaj-impl.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/relaxngDatatype.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/xsdlib.jar"/>
+		<pathelement location="${jwsdp.shared}/lib/jax-qname.jar"/>
+		<pathelement location="${jwsdp.home}/apache-ant/lib/ant.jar"/>
+		<pathelement location="${jwsdp.home}/sjsxp/lib/jsr173_api.jar" />
+		<pathelement location="${jwsdp.home}/fastinfoset/lib/FastInfoset.jar" />
+		<pathelement location="${build}"/>
+	</path>
+
+	<taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask" />
+	<taskdef name="undeploy" classname="org.apache.catalina.ant.UndeployTask" />
+	<taskdef name="list" classname="org.apache.catalina.ant.ListTask" />
+	<taskdef name="start" classname="org.apache.catalina.ant.StartTask" />
+	<taskdef name="stop" classname="org.apache.catalina.ant.StopTask" />
+	<taskdef name="install"  classname="org.apache.catalina.ant.InstallTask"/>
+	<taskdef name="reload"   classname="org.apache.catalina.ant.ReloadTask"/>
+	<taskdef name="remove" classname="org.apache.catalina.ant.RemoveTask"/>	
+	
+	<target name="ayuda">
+		<echo>
+Compilacion del servidor central:
+ant compilar-servidor-central
+ant empaquetar-servidor-central
+
+Despliegue del servidor central:
+ant desplegar-servidor-central
+ant replegar-servidor-central
+ant redesplegar-servidor-central
+ant arrancar
+ant parar
+
+General:
+ant limpiar
+ant limpiar-todo
+		</echo>
+	</target>	
+
+	<target name="montar-jerarquia" description="crea los directorios del proyecto">
+		<mkdir dir="${build}" />
+		<mkdir dir="${dist}" />
+	</target>
+  
+	<target name="preparar-web-inf" description="Copia los archivos necesarios al WEB-INF para crear el .war">
+		<copy file="../lib/mysql-connector-java-3.1.12-bin.jar" tofile="WEB-INF/lib/mysql-connector-java-3.1.12-bin.jar" />
+	</target>
+
+	<target name="generar-stubs" depends="montar-jerarquia" description="Genera los stubs del cliente a partir del archivo WSDL">
+		<exec executable="${wscompile}">
+			<arg line="-gen:client"/>
+			<arg line="-d ${build}"/>
+			<arg line="-classpath ${build}"/>
+			<arg line="articulos-wsdl.xml"/>
+		</exec>
+		<exec executable="${wscompile}">
+			<arg line="-gen:client"/>
+			<arg line="-d ${build}"/>
+			<arg line="-classpath ${build}"/>
+			<arg line="visa-wsdl.xml"/>
+		</exec>
+		
+	</target>
+
+  
+  
+	<target name="compilar-servidor-central" depends="montar-jerarquia,generar-stubs" description="Compila el servidor central">
+		<javac
+			srcdir="${src}" 
+			destdir="${build}" 
+			includes="*.java" >
+			<!-- Es necesario especificar estos classpath para que encuentre el paquete javax.xml -->
+			<classpath refid="compile.classpath"/>
+			<classpath path="${build}" />
+		</javac>	
+	</target>
+
+	<target name="empaquetar-servidor-central" description="Genera el .war del servidor central" depends="compilar-servidor-central,preparar-web-inf">
+		<delete file="${dist}/${central-war}" />
+		<jar jarfile="${dist}/${central-war}" >
+			<fileset dir="${basedir}" includes="WEB-INF/**" />
+			<fileset dir="${basedir}" includes="*.jsp" />		
+		</jar>
+	</target>
+
+	<target name="desplegar-servidor-central" description="Despliega el servidor" depends="empaquetar-servidor-central">
+		 <deploy 
+			url="${manager}" 
+			username="${username}" 
+			password="${password}" 
+			path="/${context.path}" 
+			war="file:${dist}/${central-war}"   
+		/>
+  	</target>
+
+	<target name="replegar-servidor-central" description="Replega el servicio" >
+		<undeploy 
+			url="${manager}" 
+			username="${username}" 
+			password="${password}"
+			path="/${context.path}"     
+		/>
+	</target> 
+	
+	<target name="redesplegar-servidor-central" description="Replega y vuelve a desplegar el servicio" >
+		<antcall target="replegar-servidor-central" />
+		<antcall target="desplegar-servidor-central" />
+	</target>
+	
+	<target name="arrancar" description="Arranca el servicio" >
+		<start
+			url="${manager}" 
+			username="${username}" 
+			password="${password}" 
+			path="/${context.path}" 
+		/>
+	</target>
+	
+	<target name="parar" description="Para el servicio" > 
+		<stop
+			url="${manager}" 
+			username="${username}" 
+			password="${password}" 
+			path="/${context.path}" 
+		/>
+	</target>
+	
+	
+	  <target name="limpiar" 
+		description="Borra el directorio build y archivos innecesarios">
+		<delete dir="${build}" />
+		<delete>
+			<fileset dir="." includes="**/*.bak" />
+			<fileset dir="." includes="*.bak" />
+		</delete>
+	  </target>
+	  
+ 	  <target name="limpiar-todo" depends="limpiar"
+		description="Borra el directorio build y el directorio dist">
+		<delete dir="${dist}" />
+		<delete>
+			<fileset dir="WEB-INF/lib" includes="*"/>
+		</delete>
+	  </target>
+ 
+</project>
