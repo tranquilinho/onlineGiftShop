@@ -29,9 +29,9 @@ Test
 
 Go to...
 	
-# Central server
+// Central server
 http://localhost:8080/servidor_central/
-# Local sites
+// Local sites
 http://localhost:8080/servidor_local/
 
 Default users:
@@ -42,7 +42,7 @@ Login: cliente. Clave: cliente.
 Structure
 ---------
 
-central: Central server code
-local: Local sites code
-VISA: simulated bank payment web service code
-BD: sql files to create and populate the databases (use ant)
+- central: Central server code
+- local: Local sites code
+- VISA: simulated bank payment web service code
+- BD: sql files to create and populate the databases (use ant)
